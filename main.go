@@ -15,7 +15,8 @@ func main() {
 	path := getSwaySocketPath()
 	repo := NewRepository(getDatabasePath())
 	conn := connectToSocket(path)
-	_, res, err := NewIPC(conn).Roundtrip(GET_OUTPUTS)
+	ipc := NewIPC(conn)
+	_, res, err := ipc.Roundtrip(GET_OUTPUTS)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,8 +27,10 @@ func main() {
 	}
 
 	f := Fingerprint(setup)
+	log.Println("current:", f)
 
-	switch flag.Arg(1) {
+	flag.Parse()
+	switch flag.Arg(0) {
 	case "auto":
 		if err := repo.Load(&setup, f); err != nil {
 			log.Fatal(err)
@@ -35,8 +38,17 @@ func main() {
 		if Fingerprint(setup) != f {
 			log.Fatal("corrupted profile:", f)
 		}
-		// TODO: set configuration
+		for _, c := range setup.Commands() {
+			log.Println("running:", c)
+			_, res, err := ipc.Roundtrip(RUN_COMMAND, []byte(c)...)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println("result:", string(res))
+		}
+		break
 	case "save":
+		log.Println("saving:", f)
 		if err := repo.Save(&setup, f); err != nil {
 			log.Fatal(err)
 		}
@@ -51,7 +63,7 @@ func getDatabasePath() string {
 	if configDir == "" {
 		configDir = filepath.Join(os.Getenv("HOME"), ".config")
 	}
-	return filepath.Join(configDir, "wl-monitors")
+	return filepath.Join(configDir, "autosway")
 }
 
 func getSwaySocketPath() string {

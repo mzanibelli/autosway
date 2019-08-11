@@ -1,3 +1,3 @@
-module wl-monitors
+module autosway
 
 go 1.12

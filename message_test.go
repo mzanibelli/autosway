@@ -6,21 +6,67 @@ import (
 	"testing"
 )
 
-var testPayload = []byte{
+var testPayloadWithoutBody = []byte{
+	// magic
 	byte(0x69),
 	byte(0x33),
 	byte(0x2d),
 	byte(0x69),
 	byte(0x70),
 	byte(0x63),
+	// length
 	byte(0x00),
 	byte(0x00),
 	byte(0x00),
 	byte(0x00),
+	// type
 	byte(0x03),
 	byte(0x00),
 	byte(0x00),
 	byte(0x00),
+}
+
+var testPayloadWithBody = []byte{
+	// magic
+	byte(0x69),
+	byte(0x33),
+	byte(0x2d),
+	byte(0x69),
+	byte(0x70),
+	byte(0x63),
+	// length
+	byte(0x01), // payload is not empty
+	byte(0x00),
+	byte(0x00),
+	byte(0x00),
+	// type
+	byte(0x03),
+	byte(0x00),
+	byte(0x00),
+	byte(0x00),
+	// payload
+	byte(0x00), // and that's true
+}
+
+var testInconsistentPayload = []byte{
+	// magic
+	byte(0x69),
+	byte(0x33),
+	byte(0x2d),
+	byte(0x69),
+	byte(0x70),
+	byte(0x63),
+	// length
+	byte(0x01), // payload is not empty
+	byte(0x00),
+	byte(0x00),
+	byte(0x00),
+	// type
+	byte(0x03),
+	byte(0x00),
+	byte(0x00),
+	byte(0x00),
+	// but that's not true
 }
 
 func TestEncoding(t *testing.T) {
@@ -28,7 +74,7 @@ func TestEncoding(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	expected := dump(testPayload)
+	expected := dump(testPayloadWithoutBody)
 	actual := dump(SUT.buffer.Bytes())
 	if expected != actual {
 		t.Errorf("expected: %s, actual: %s", expected, actual)
@@ -36,7 +82,7 @@ func TestEncoding(t *testing.T) {
 }
 
 func TestDecoding(t *testing.T) {
-	input := bytes.NewBuffer(testPayload)
+	input := bytes.NewBuffer(testPayloadWithoutBody)
 	input.Next(MAGIC_LENGTH)
 	SUT, err := readMessage(input)
 	if err != nil {
@@ -47,6 +93,43 @@ func TestDecoding(t *testing.T) {
 	}
 	if SUT.Length != 0 {
 		t.Error("invalid length:", SUT.Length)
+	}
+}
+
+func TestConsistency(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []byte
+		err   bool
+	}{
+		{
+			name:  "it should not fail with zero length and empty body",
+			input: testPayloadWithoutBody,
+			err:   false,
+		},
+		{
+			name:  "it should not fail with non-zero length and non-empty body",
+			input: testPayloadWithBody,
+			err:   false,
+		},
+		{
+			name:  "it should fail if length is not zero and body is empty",
+			input: testInconsistentPayload,
+			err:   true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			input := bytes.NewBuffer(test.input)
+			input.Next(MAGIC_LENGTH)
+			_, err := readMessage(input)
+			if test.err == true && err == nil {
+				t.Error("should fail")
+			}
+			if !test.err && err != nil {
+				t.Error(err)
+			}
+		})
 	}
 }
 

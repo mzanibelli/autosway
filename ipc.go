@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"io"
 )
 
@@ -20,6 +21,9 @@ func New(rw io.ReadWriter) *IPC {
 }
 
 func (ipc *IPC) Roundtrip(t int32, bs ...byte) (int32, []byte, error) {
+	if ipc.rw == nil {
+		return 0, nil, errors.New("invalid socket")
+	}
 	request, err := buildMessage(t, bs...)
 	if err != nil {
 		return 0, nil, err
@@ -60,10 +64,7 @@ func shouldHandleNextBytes(r *bufio.Reader) bool {
 		return true
 	}
 	next, err := r.Peek(MAGIC_LENGTH)
-	if err != nil {
-		return false
-	}
-	if string(next) == MAGIC_STRING {
+	if err != nil || string(next) == MAGIC_STRING {
 		return false
 	}
 	return true

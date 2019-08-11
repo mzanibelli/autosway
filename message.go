@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 )
@@ -69,6 +70,9 @@ func readMessage(r *bytes.Buffer) (*Message, error) {
 	}
 	if err := unmarshal(r, &(m.Type)); err != nil {
 		return nil, err
+	}
+	if int(m.Length) != r.Len() {
+		return nil, errors.New("truncated payload")
 	}
 	m.Payload = make([]byte, r.Len())
 	copy(m.Payload, r.Bytes())

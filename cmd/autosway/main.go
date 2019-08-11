@@ -1,6 +1,7 @@
 package main
 
 import (
+	"autosway"
 	"encoding/json"
 	"flag"
 	"log"
@@ -13,20 +14,20 @@ import (
 
 func main() {
 	path := getSwaySocketPath()
-	repo := NewRepository(getDatabasePath())
 	conn := connectToSocket(path)
-	ipc := NewIPC(conn)
-	_, res, err := ipc.Roundtrip(GET_OUTPUTS)
+	ipc := autosway.NewIPC(conn)
+	repo := autosway.NewRepository(getDatabasePath())
+	_, res, err := ipc.Roundtrip(autosway.GET_OUTPUTS)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var setup Setup
+	var setup autosway.Setup
 	if err := json.Unmarshal(res, &setup); err != nil {
 		log.Fatal(err)
 	}
 
-	f := Fingerprint(setup)
+	f := autosway.Fingerprint(setup)
 	log.Println("current:", f)
 
 	flag.Parse()
@@ -35,12 +36,12 @@ func main() {
 		if err := repo.Load(&setup, f); err != nil {
 			log.Fatal(err)
 		}
-		if Fingerprint(setup) != f {
+		if autosway.Fingerprint(setup) != f {
 			log.Fatal("corrupted profile:", f)
 		}
 		for _, c := range setup.Commands() {
 			log.Println("running:", c)
-			_, res, err := ipc.Roundtrip(RUN_COMMAND, []byte(c)...)
+			_, res, err := ipc.Roundtrip(autosway.RUN_COMMAND, []byte(c)...)
 			if err != nil {
 				log.Fatal(err)
 			}

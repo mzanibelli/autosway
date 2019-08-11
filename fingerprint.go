@@ -1,4 +1,4 @@
-package main
+package autosway
 
 import (
 	"crypto/sha256"

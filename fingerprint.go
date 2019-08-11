@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func Fingerprint(s *Setup) string {
+func Fingerprint(s Setup) string {
 	outputs := make([]string, len(s.Outputs), len(s.Outputs))
 	for i := range outputs {
 		outputs[i] = slug(s.Outputs[i])
@@ -23,6 +23,6 @@ func slug(o Output) string {
 
 func hash(outputs []string) string {
 	h := sha256.New()
-	h.Write([]byte(strings.Join(outputs, "")))
-	return string(h.Sum(nil))
+	h.Write([]byte(strings.Join(outputs, "+++")))
+	return fmt.Sprintf("%x", h.Sum(nil))
 }

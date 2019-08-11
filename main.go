@@ -17,7 +17,8 @@ func main() {
 	}
 	var setup Setup
 	json.Unmarshal(res, &setup)
-	fmt.Println(setup.Outputs[0].Name)
+	f := Fingerprint(setup)
+	fmt.Println(f)
 }
 
 func getSwaySocketPath() string {

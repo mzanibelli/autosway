@@ -3,37 +3,37 @@ package main
 import "testing"
 
 var (
-	screen0 *Setup = &Setup{[]Output{{
+	screen0 Setup = Setup{[]Output{{
 		Name:   "LVDS-1",
 		Make:   "Apple Computer Inc",
 		Model:  "Color LCD",
 		Serial: "0x00000000",
 	}}}
-	screen1 *Setup = &Setup{[]Output{{
+	screen1 Setup = Setup{[]Output{{
 		Name:   "HDMI-1",
 		Make:   "Apple Computer Inc",
 		Model:  "Color LCD",
 		Serial: "0x00000000",
 	}}}
-	screen2 *Setup = &Setup{[]Output{{
+	screen2 Setup = Setup{[]Output{{
 		Name:   "LVDS-1",
 		Make:   "Samsung",
 		Model:  "Color LCD",
 		Serial: "0x00000000",
 	}}}
-	screen3 *Setup = &Setup{[]Output{{
+	screen3 Setup = Setup{[]Output{{
 		Name:   "LVDS-1",
 		Make:   "Apple Computer Inc",
 		Model:  "Apple TV",
 		Serial: "0x00000000",
 	}}}
-	screen4 *Setup = &Setup{[]Output{{
+	screen4 Setup = Setup{[]Output{{
 		Name:   "LVDS-1",
 		Make:   "Apple Computer Inc",
 		Model:  "Color LCD",
 		Serial: "0x00000001",
 	}}}
-	screen00 *Setup = &Setup{[]Output{
+	screen00 Setup = Setup{[]Output{
 		{
 			Name:   "LVDS-1",
 			Make:   "Apple Computer Inc",
@@ -46,7 +46,7 @@ var (
 			Model:  "Color LCD",
 			Serial: "0x00000000",
 		}}}
-	screen01 *Setup = &Setup{[]Output{
+	screen01 Setup = Setup{[]Output{
 		{
 			Name:   "LVDS-1",
 			Make:   "Apple Computer Inc",
@@ -59,7 +59,7 @@ var (
 			Model:  "Color LCD",
 			Serial: "0x00000000",
 		}}}
-	screen10 *Setup = &Setup{[]Output{
+	screen10 Setup = Setup{[]Output{
 		{
 			Name:   "HDMI-1",
 			Make:   "Apple Computer Inc",
@@ -77,8 +77,8 @@ var (
 func TestFingerprint(t *testing.T) {
 	tests := []struct {
 		name   string
-		setup1 *Setup
-		setup2 *Setup
+		setup1 Setup
+		setup2 Setup
 		match  bool
 	}{
 		{

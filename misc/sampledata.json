@@ -1,0 +1,33 @@
+[
+  {
+    "id": 3,
+    "name": "LVDS-1",
+    "rect": { "x": 0, "y": 0, "width": 1440, "height": 900 },
+    "focus": [4],
+    "border": "none",
+    "current_border_width": 0,
+    "layout": "output",
+    "orientation": "none",
+    "percent": 1.0,
+    "window_rect": { "x": 0, "y": 0, "width": 0, "height": 0 },
+    "deco_rect": { "x": 0, "y": 0, "width": 0, "height": 0 },
+    "geometry": { "x": 0, "y": 0, "width": 0, "height": 0 },
+    "window": null,
+    "urgent": false,
+    "floating_nodes": [],
+    "sticky": false,
+    "type": "output",
+    "active": true,
+    "primary": false,
+    "make": "Apple Computer Inc",
+    "model": "Color LCD",
+    "serial": "0x00000000",
+    "scale": 1.0,
+    "transform": "normal",
+    "current_workspace": "1",
+    "modes": [{ "width": 1440, "height": 900, "refresh": 59901 }],
+    "current_mode": { "width": 1440, "height": 900, "refresh": 59901 },
+    "focused": true,
+    "subpixel_hinting": "rgb"
+  }
+]

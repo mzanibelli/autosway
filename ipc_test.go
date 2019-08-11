@@ -49,7 +49,7 @@ func TestRoundtrip(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			SUT := New(test.connection)
+			SUT := NewIPC(test.connection)
 			_, _, err := SUT.Roundtrip(GET_OUTPUTS)
 			if test.err == true && err == nil {
 				t.Error("should fail")
@@ -68,7 +68,7 @@ func TestParsing(t *testing.T) {
 	}
 	payload := []byte("hello")
 	args = append(args, payload...)
-	SUT := New(mockSocket("i3-ipc", args...))
+	SUT := NewIPC(mockSocket("i3-ipc", args...))
 	typ, res, err := SUT.Roundtrip(GET_OUTPUTS)
 	if err != nil {
 		t.Error(err)

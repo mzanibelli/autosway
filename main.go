@@ -10,8 +10,8 @@ import (
 
 func main() {
 	path := getSwaySocketPath()
-	socket := connectToSocket(path)
-	_, res, err := New(socket).Roundtrip(GET_OUTPUTS)
+	conn := connectToSocket(path)
+	_, res, err := NewIPC(conn).Roundtrip(GET_OUTPUTS)
 	if err != nil {
 		panic(err)
 	}

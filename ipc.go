@@ -16,7 +16,7 @@ type IPC struct {
 	rw io.ReadWriter
 }
 
-func New(rw io.ReadWriter) *IPC {
+func NewIPC(rw io.ReadWriter) *IPC {
 	return &IPC{rw: rw}
 }
 

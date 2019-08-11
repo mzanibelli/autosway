@@ -3,8 +3,10 @@ package main
 import "encoding/json"
 
 type Output struct {
-	Id   int
-	Name string
+	Name   string
+	Make   string
+	Model  string
+	Serial string
 }
 
 type Setup struct {

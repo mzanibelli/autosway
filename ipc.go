@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 )
 
@@ -61,7 +60,6 @@ func (ipc *IPC) reply() (*Message, error) {
 func shouldHandleNextBytes(r *bufio.Reader) bool {
 	switch {
 	case r.Buffered() == 0:
-		fmt.Println(r)
 		return false
 	case r.Buffered() < MAGIC_LENGTH:
 		return true

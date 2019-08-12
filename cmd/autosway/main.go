@@ -2,7 +2,6 @@ package main
 
 import (
 	"autosway"
-	"encoding/json"
 	"flag"
 	"log"
 	"net"
@@ -13,49 +12,27 @@ import (
 )
 
 func main() {
-	path := getSwaySocketPath()
-	conn := connectToSocket(path)
-	ipc := autosway.NewIPC(conn)
+	ipc := autosway.NewIPC(connectToSocket())
 	repo := autosway.NewRepository(getDatabasePath())
-	_, res, err := ipc.Roundtrip(autosway.GET_OUTPUTS)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	var setup autosway.Setup
-	if err := json.Unmarshal(res, &setup); err != nil {
-		log.Fatal(err)
-	}
-
+	must(autosway.Current(ipc, &setup))
 	f := autosway.Fingerprint(setup)
 	log.Println("current:", f)
 
 	flag.Parse()
+
 	switch flag.Arg(0) {
-	case "auto":
-		if err := repo.Load(&setup, f); err != nil {
-			log.Fatal(err)
-		}
-		if autosway.Fingerprint(setup) != f {
-			log.Fatal("corrupted profile:", f)
-		}
-		for _, c := range setup.Commands() {
-			log.Println("running:", c)
-			_, res, err := ipc.Roundtrip(autosway.RUN_COMMAND, []byte(c)...)
-			if err != nil {
-				log.Fatal(err)
-			}
-			log.Println("result:", string(res))
-		}
+	case "", "auto":
+		log.Println("running configuration commands...")
+		must(autosway.Auto(ipc, repo, &setup, f))
 		break
 	case "save":
-		log.Println("saving:", f)
-		if err := repo.Save(&setup, f); err != nil {
-			log.Fatal(err)
-		}
+		log.Println("saving profile to disk...")
+		must(autosway.Save(repo, &setup, f))
 		break
 	default:
-		log.Fatal("not implemented:", flag.Arg(1))
+		log.Fatalf("usage: %s %s", os.Args[0], "auto|save")
 	}
 }
 
@@ -75,10 +52,16 @@ func getSwaySocketPath() string {
 	return strings.Trim(string(path), "\n")
 }
 
-func connectToSocket(socket string) net.Conn {
-	conn, err := net.Dial("unix", socket)
+func connectToSocket() net.Conn {
+	conn, err := net.Dial("unix", getSwaySocketPath())
 	if err != nil {
 		log.Fatal(err)
 	}
 	return conn
+}
+
+func must(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
 }

@@ -14,6 +14,7 @@ type Output struct {
 	Serial    string
 	Transform string
 	Rect      Rect
+	Active    bool
 }
 
 type Rect struct {
@@ -33,12 +34,15 @@ func (s *Setup) UnmarshalJSON(data []byte) error {
 }
 
 func (s Setup) Commands() []string {
-	result := make([]string, 0, len(s.Outputs)*2)
+	result := make([]string, 0, len(s.Outputs)*3)
 	for _, o := range s.Outputs {
-		result = append(result, fmt.Sprintf("output %s %s",
-			o.Name, o.String()))
-		result = append(result, fmt.Sprintf("output %s transform %s",
-			o.Name, o.Transform))
+		if !o.Active {
+			result = append(result, fmt.Sprintf("output %s disable", o.Name))
+			continue
+		}
+		result = append(result, fmt.Sprintf("output %s enable", o.Name))
+		result = append(result, fmt.Sprintf("output %s %s", o.Name, o.String()))
+		result = append(result, fmt.Sprintf("output %s transform %s", o.Name, o.Transform))
 	}
 	return result
 }

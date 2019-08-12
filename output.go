@@ -5,8 +5,6 @@ import (
 	"fmt"
 )
 
-const DEFAULT_TRANSFORM = "normal"
-
 type Output struct {
 	Name      string
 	Make      string

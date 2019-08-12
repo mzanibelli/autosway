@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 )
 
 const (
 	MAGIC_STRING = "i3-ipc"
 	MAGIC_LENGTH = 6
+	BUFFER_SIZE  = 1024 * 16 // 16Ko
 )
 
 type IPC struct {
@@ -39,7 +41,7 @@ func (ipc *IPC) Roundtrip(t int32, bs ...byte) (int32, []byte, error) {
 }
 
 func (ipc *IPC) reply() (*Message, error) {
-	data := bufio.NewReader(ipc.rw)
+	data := bufio.NewReaderSize(ipc.rw, BUFFER_SIZE)
 	if _, err := data.Discard(MAGIC_LENGTH); err != nil {
 		return nil, err
 	}
@@ -59,6 +61,7 @@ func (ipc *IPC) reply() (*Message, error) {
 func shouldHandleNextBytes(r *bufio.Reader) bool {
 	switch {
 	case r.Buffered() == 0:
+		fmt.Println(r)
 		return false
 	case r.Buffered() < MAGIC_LENGTH:
 		return true

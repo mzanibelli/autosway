@@ -17,8 +17,7 @@ func Fingerprint(s Setup) string {
 }
 
 func slug(o Output) string {
-	return fmt.Sprintf("%s|%s|%s|%s",
-		o.Name, o.Make, o.Model, o.Serial)
+	return fmt.Sprintf("%s|%s|%s", o.Make, o.Model, o.Serial)
 }
 
 func hash(outputs []string) string {

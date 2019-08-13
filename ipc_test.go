@@ -2,10 +2,15 @@ package autosway
 
 import (
 	"bytes"
+	"errors"
 	"io"
-	"reflect"
 	"testing"
 )
+
+var validMessage = []byte{
+	byte(0x00), byte(0x00), byte(0x00), byte(0x00),
+	byte(0x03), byte(0x00), byte(0x00), byte(0x00),
+}
 
 func TestRoundtrip(t *testing.T) {
 	tests := []struct {
@@ -14,37 +19,29 @@ func TestRoundtrip(t *testing.T) {
 		err        bool
 	}{
 		{
-			name:       "should fail if the connection is nil",
-			connection: nil,
+			name:       "should fail if the input message is invalid",
+			connection: sway(""),
 			err:        true,
 		},
 		{
-			name:       "should fail if there is no data to read",
-			connection: mockSocket(""),
+			name:       "it should fail if socket write fails",
+			connection: sway("writefail"),
 			err:        true,
 		},
 		{
-			name:       "should fail if there is less than a magic string to read",
-			connection: mockSocket("i3-ip"),
+			name:       "it should fail if socket read fails",
+			connection: sway("readfail"),
 			err:        true,
 		},
 		{
-			name:       "should fail if there is just the magic string",
-			connection: mockSocket("i3-ipc"),
+			name:       "it should fail if response message is invalid",
+			connection: sway("badresponse"),
 			err:        true,
 		},
 		{
-			name: "should fail if there is no type",
-			connection: mockSocket("i3-ipc",
-				byte(0x00), byte(0x00), byte(0x00), byte(0x00)),
-			err: true,
-		},
-		{
-			name: "should success if length is zero and there is a type",
-			connection: mockSocket("i3-ipc",
-				byte(0x00), byte(0x00), byte(0x00), byte(0x00),
-				byte(0x03), byte(0x00), byte(0x00), byte(0x00)),
-			err: false,
+			name:       "should success if the message is valid",
+			connection: sway("valid"),
+			err:        false,
 		},
 	}
 	for _, test := range tests {
@@ -61,42 +58,48 @@ func TestRoundtrip(t *testing.T) {
 	}
 }
 
-func TestParsing(t *testing.T) {
-	args := []byte{
-		byte(0x05), byte(0x00), byte(0x00), byte(0x00), // length = 5
-		byte(0x03), byte(0x00), byte(0x00), byte(0x00), // type = 3
+func sway(data string) *mockSocket {
+	s := new(mockSocket)
+	buf := bytes.NewBufferString("")
+	switch data {
+	case "writefail":
+		s.writeErr = errors.New("foo")
+		buf.WriteString("i3-ipc")
+		buf.Write(validMessage)
+		break
+	case "readfail":
+		s.readErr = errors.New("foo")
+		buf.WriteString("i3-ipc")
+		buf.Write(validMessage)
+		break
+	case "badresponse":
+		buf.Write([]byte("foo"))
+		break
+	case "valid":
+		buf.WriteString("i3-ipc")
+		buf.Write(validMessage)
+		break
 	}
-	payload := []byte("hello")
-	args = append(args, payload...)
-	SUT := NewIPC(mockSocket("i3-ipc", args...))
-	typ, res, err := SUT.Roundtrip(GET_OUTPUTS)
-	if err != nil {
-		t.Error(err)
-	}
-	if typ != GET_OUTPUTS {
-		t.Error("unexpected response type:", typ)
-	}
-	if !reflect.DeepEqual(res, payload) {
-		t.Error("unexpected response payload:", res)
-	}
+	s.rw = buf
+	return s
 }
 
-func mockSocket(data string, bs ...byte) *readOnly {
-	buf := bytes.NewBufferString(data)
-	for _, b := range bs {
-		buf.WriteByte(b)
+type mockSocket struct {
+	rw       *bytes.Buffer
+	writeErr error
+	readErr  error
+}
+
+func (r *mockSocket) Read(p []byte) (int, error) {
+	if r.readErr == nil {
+		return r.rw.Read(p)
 	}
-	return &readOnly{buf}
+	return 0, r.readErr
 }
 
-type readOnly struct {
-	rw *bytes.Buffer
-}
-
-func (r *readOnly) Read(p []byte) (int, error) {
-	return r.rw.Read(p)
-}
-
-func (r *readOnly) Write(p []byte) (int, error) {
-	return len(p), nil
+func (r *mockSocket) Write(p []byte) (int, error) {
+	if r.writeErr == nil {
+		return len(p), nil
+	}
+	return 0, r.writeErr
 }

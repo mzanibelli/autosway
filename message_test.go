@@ -3,17 +3,17 @@ package autosway
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"reflect"
 	"testing"
 )
 
 var testPayloadWithoutBody = []byte{
 	// magic
-	byte(0x69),
-	byte(0x33),
-	byte(0x2d),
-	byte(0x69),
-	byte(0x70),
-	byte(0x63),
+	byte(0x66),
+	byte(0x6f),
+	byte(0x6f),
 	// length
 	byte(0x00),
 	byte(0x00),
@@ -28,12 +28,9 @@ var testPayloadWithoutBody = []byte{
 
 var testPayloadWithBody = []byte{
 	// magic
-	byte(0x69),
-	byte(0x33),
-	byte(0x2d),
-	byte(0x69),
-	byte(0x70),
-	byte(0x63),
+	byte(0x66),
+	byte(0x6f),
+	byte(0x6f),
 	// length
 	byte(0x01), // payload is not empty
 	byte(0x00),
@@ -50,12 +47,9 @@ var testPayloadWithBody = []byte{
 
 var testInconsistentPayload = []byte{
 	// magic
-	byte(0x69),
-	byte(0x33),
-	byte(0x2d),
-	byte(0x69),
-	byte(0x70),
-	byte(0x63),
+	byte(0x66),
+	byte(0x6f),
+	byte(0x6f),
 	// length
 	byte(0x01), // payload is not empty
 	byte(0x00),
@@ -69,23 +63,39 @@ var testInconsistentPayload = []byte{
 	// but that's not true
 }
 
-func TestEncoding(t *testing.T) {
-	SUT, err := buildMessage(GET_OUTPUTS)
-	if err != nil {
+func TestSerializeWithoutBody(t *testing.T) {
+	SUT := NewMessage("foo", GET_OUTPUTS)
+	if err := SUT.Serialize(); err != nil {
 		t.Error(err)
 	}
 	expected := dump(testPayloadWithoutBody)
-	actual := dump(SUT.buffer.Bytes())
+	content, _ := ioutil.ReadAll(SUT)
+	actual := dump(content)
 	if expected != actual {
 		t.Errorf("expected: %s, actual: %s", expected, actual)
 	}
 }
 
-func TestDecoding(t *testing.T) {
+func TestSerializeWithBody(t *testing.T) {
+	SUT := NewMessage("foo", GET_OUTPUTS, byte(0x00))
+	if err := SUT.Serialize(); err != nil {
+		t.Error(err)
+	}
+	expected := dump(testPayloadWithBody)
+	content, _ := ioutil.ReadAll(SUT)
+	actual := dump(content)
+	if expected != actual {
+		t.Errorf("expected: %s, actual: %s", expected, actual)
+	}
+}
+
+func TestUnserializeWithoutBody(t *testing.T) {
 	input := bytes.NewBuffer(testPayloadWithoutBody)
-	input.Next(MAGIC_LENGTH)
-	SUT, err := readMessage(input)
-	if err != nil {
+	SUT := NewMessageSize("foo", input.Len())
+	if _, err := io.Copy(SUT, input); err != nil {
+		t.Error(err)
+	}
+	if err := SUT.Unserialize(); err != nil {
 		t.Error(err)
 	}
 	if SUT.Type != GET_OUTPUTS {
@@ -93,6 +103,26 @@ func TestDecoding(t *testing.T) {
 	}
 	if SUT.Length != 0 {
 		t.Error("invalid length:", SUT.Length)
+	}
+}
+
+func TestUnserializeWithBody(t *testing.T) {
+	input := bytes.NewBuffer(testPayloadWithBody)
+	SUT := NewMessageSize("foo", input.Len())
+	if _, err := io.Copy(SUT, input); err != nil {
+		t.Error(err)
+	}
+	if err := SUT.Unserialize(); err != nil {
+		t.Error(err)
+	}
+	if SUT.Type != GET_OUTPUTS {
+		t.Error("invalid type:", SUT.Type)
+	}
+	if SUT.Length != 1 {
+		t.Error("invalid length:", SUT.Length)
+	}
+	if !reflect.DeepEqual([]byte{byte(0x00)}, SUT.Payload) {
+		t.Error("invalid payload")
 	}
 }
 
@@ -121,8 +151,11 @@ func TestConsistency(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			input := bytes.NewBuffer(test.input)
-			input.Next(MAGIC_LENGTH)
-			_, err := readMessage(input)
+			SUT := NewMessageSize("foo", input.Len())
+			if _, err := io.Copy(SUT, input); err != nil {
+				t.Error(err)
+			}
+			err := SUT.Unserialize()
 			if test.err == true && err == nil {
 				t.Error("should fail")
 			}

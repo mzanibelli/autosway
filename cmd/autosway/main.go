@@ -6,13 +6,13 @@ import (
 	"log"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 func main() {
-	ipc := autosway.NewIPC(connectToSocket())
+	conn := connectToSocket()
+	defer conn.Close()
+	ipc := autosway.NewIPC(conn)
 	repo := autosway.NewRepository(getDatabasePath())
 
 	var setup autosway.Setup
@@ -44,16 +44,8 @@ func getDatabasePath() string {
 	return filepath.Join(configDir, "autosway")
 }
 
-func getSwaySocketPath() string {
-	path, err := exec.Command("sway", "--get-socketpath").Output()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return strings.Trim(string(path), "\n")
-}
-
 func connectToSocket() net.Conn {
-	conn, err := net.Dial("unix", getSwaySocketPath())
+	conn, err := net.Dial("unix", os.Getenv("SWAYSOCK"))
 	if err != nil {
 		log.Fatal(err)
 	}

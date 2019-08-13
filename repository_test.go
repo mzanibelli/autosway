@@ -2,6 +2,7 @@ package autosway
 
 import (
 	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -18,15 +19,19 @@ func TestRepository(t *testing.T) {
 	if err != nil {
 		t.Fatal("could not initialize test environment:", err)
 	}
+	defer os.RemoveAll(tmpRoot)
+
 	SUT := NewRepository(tmpRoot)
 	if err := SUT.Save(&testSetup, "foo"); err != nil {
 		t.Error(err)
 	}
+
 	var readSetup Setup
 	err = SUT.Load(&readSetup, "foo")
 	if err != nil {
 		t.Error(err)
 	}
+
 	if !reflect.DeepEqual(testSetup, readSetup) {
 		t.Error("serialization inconsistency")
 	}

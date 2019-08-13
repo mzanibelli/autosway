@@ -17,4 +17,4 @@ Assuming you have Go installed, just run `make`.
 ## Links
 
 - [Sway](https://swaywm.org)
-- [Autorandr](https://github.com/wertarbyte/autorandr)
+- [Autorandr](https://github.com/phillipberndt/autorandr)
